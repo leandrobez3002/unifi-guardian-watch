@@ -13,11 +13,14 @@ import {
   Sun
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useFirewall } from "@/contexts/FirewallContext";
+import { Link } from "react-router-dom";
 
 const UnifiHeader = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const { toast } = useToast();
+  const { activeFirewall } = useFirewall();
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -41,24 +44,42 @@ const UnifiHeader = () => {
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-3">
+            <Link to="/" className="flex items-center space-x-3">
               <div className="p-2 rounded-lg unifi-gradient">
                 <Wifi className="h-6 w-6 text-white" />
               </div>
               <div>
                 <h2 className="text-xl font-bold">UniFi Control</h2>
                 <div className="flex items-center space-x-2">
-                  <Badge variant="outline" className="text-xs">
-                    <Server className="h-3 w-3 mr-1" />
-                    UDM Pro
-                  </Badge>
-                  <Badge variant="outline" className="text-xs">
-                    <Wifi className="h-3 w-3 mr-1" />
-                    Online
-                  </Badge>
+                  {activeFirewall ? (
+                    <>
+                      <Badge variant="outline" className="text-xs">
+                        {activeFirewall.type === 'UDM' ? (
+                          <Server className="h-3 w-3 mr-1" />
+                        ) : (
+                          <Wifi className="h-3 w-3 mr-1" />
+                        )}
+                        {activeFirewall.name}
+                      </Badge>
+                      <Badge 
+                        variant="outline" 
+                        className={`text-xs ${
+                          activeFirewall.status === 'online' 
+                            ? 'text-green-600 border-green-200' 
+                            : 'text-gray-600 border-gray-200'
+                        }`}
+                      >
+                        {activeFirewall.status === 'online' ? 'Online' : 'Offline'}
+                      </Badge>
+                    </>
+                  ) : (
+                    <Badge variant="outline" className="text-xs text-orange-600 border-orange-200">
+                      Nenhum firewall configurado
+                    </Badge>
+                  )}
                 </div>
               </div>
-            </div>
+            </Link>
           </div>
 
           <div className="flex items-center space-x-3">
@@ -86,9 +107,11 @@ const UnifiHeader = () => {
               <Bell className="h-4 w-4" />
             </Button>
 
-            <Button variant="outline" size="sm">
-              <Settings className="h-4 w-4" />
-            </Button>
+            <Link to="/settings">
+              <Button variant="outline" size="sm">
+                <Settings className="h-4 w-4" />
+              </Button>
+            </Link>
 
             <Button variant="outline" size="sm">
               <User className="h-4 w-4" />
