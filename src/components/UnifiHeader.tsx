@@ -10,10 +10,12 @@ import {
   Bell,
   User,
   Moon,
-  Sun
+  Sun,
+  LogOut
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useFirewall } from "@/contexts/FirewallContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
 
 const UnifiHeader = () => {
@@ -21,6 +23,7 @@ const UnifiHeader = () => {
   const [isDark, setIsDark] = useState(false);
   const { toast } = useToast();
   const { activeFirewall } = useFirewall();
+  const { user, logout } = useAuth();
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -37,6 +40,14 @@ const UnifiHeader = () => {
   const toggleTheme = () => {
     setIsDark(!isDark);
     document.documentElement.classList.toggle('dark');
+  };
+
+  const handleLogout = () => {
+    logout();
+    toast({
+      title: "Logout realizado",
+      description: "Você foi desconectado com sucesso.",
+    });
   };
 
   return (
@@ -83,6 +94,14 @@ const UnifiHeader = () => {
           </div>
 
           <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2 text-sm">
+              <User className="h-4 w-4" />
+              <span className="font-medium">{user?.name}</span>
+              <Badge variant="outline" className="text-xs">
+                {user?.role === 'admin' ? 'Admin' : 'Usuário'}
+              </Badge>
+            </div>
+
             <Button
               variant="outline"
               size="sm"
@@ -113,8 +132,8 @@ const UnifiHeader = () => {
               </Button>
             </Link>
 
-            <Button variant="outline" size="sm">
-              <User className="h-4 w-4" />
+            <Button variant="outline" size="sm" onClick={handleLogout}>
+              <LogOut className="h-4 w-4" />
             </Button>
           </div>
         </div>
