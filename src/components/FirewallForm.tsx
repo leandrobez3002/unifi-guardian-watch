@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,12 +47,17 @@ const FirewallForm: React.FC<FirewallFormProps> = ({ firewall, trigger }) => {
         apiUrl = `${apiUrl}/proxy/network/integration/v1`;
       }
 
+      console.log('Testando conexão com:', apiUrl);
+
       const response = await fetch(`${apiUrl}/sites`, {
         method: 'GET',
         headers: {
           'X-API-KEY': formData.apiKey,
           'Accept': 'application/json',
         },
+        // Adicionar configurações para lidar com CORS e HTTPS
+        mode: 'cors',
+        credentials: 'omit',
       });
 
       if (response.ok) {
@@ -67,9 +71,18 @@ const FirewallForm: React.FC<FirewallFormProps> = ({ firewall, trigger }) => {
       }
     } catch (error) {
       console.error('Erro ao testar conexão:', error);
+      
+      let errorMessage = "Erro desconhecido ao conectar com a API.";
+      
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        errorMessage = "Falha na conexão. Verifique:\n• Se a URL está correta\n• Se o dispositivo está acessível na rede\n• Se há problemas de CORS (tente acessar via HTTPS)";
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+
       toast({
         title: "Falha na conexão",
-        description: error instanceof Error ? error.message : "Erro desconhecido ao conectar com a API.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
