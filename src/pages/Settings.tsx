@@ -49,6 +49,12 @@ const Settings = () => {
     }
   };
 
+  const maskApiKey = (apiKey: string) => {
+    if (!apiKey) return '';
+    if (apiKey.length <= 8) return '*'.repeat(apiKey.length);
+    return apiKey.substring(0, 4) + '*'.repeat(apiKey.length - 8) + apiKey.substring(apiKey.length - 4);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       <UnifiHeader />
@@ -132,6 +138,9 @@ const Settings = () => {
                           <div className="space-y-2">
                             <div className="text-sm text-muted-foreground">
                               <strong>API:</strong> {firewall.apiUrl}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              <strong>Key:</strong> {maskApiKey(firewall.apiKey)}
                             </div>
                             {firewall.lastUpdated && (
                               <div className="text-xs text-muted-foreground">

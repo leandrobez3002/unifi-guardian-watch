@@ -20,6 +20,7 @@ const FirewallForm: React.FC<FirewallFormProps> = ({ firewall, trigger }) => {
   const [formData, setFormData] = useState({
     name: firewall?.name || '',
     apiUrl: firewall?.apiUrl || '',
+    apiKey: firewall?.apiKey || '',
     type: firewall?.type || 'UDM' as 'UDM' | 'UCG',
   });
   
@@ -29,10 +30,10 @@ const FirewallForm: React.FC<FirewallFormProps> = ({ firewall, trigger }) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.apiUrl) {
+    if (!formData.name || !formData.apiUrl || !formData.apiKey) {
       toast({
         title: "Erro",
-        description: "Nome e URL da API são obrigatórios.",
+        description: "Nome, URL da API e API Key são obrigatórios.",
         variant: "destructive",
       });
       return;
@@ -49,14 +50,28 @@ const FirewallForm: React.FC<FirewallFormProps> = ({ firewall, trigger }) => {
       return;
     }
 
+    // Ajustar a URL para o formato correto da API UniFi
+    let apiUrl = formData.apiUrl;
+    if (!apiUrl.includes('/proxy/network/integration/v1')) {
+      // Remove trailing slash se existir
+      apiUrl = apiUrl.replace(/\/$/, '');
+      // Adiciona o endpoint correto
+      apiUrl = `${apiUrl}/proxy/network/integration/v1`;
+    }
+
+    const firewallData = {
+      ...formData,
+      apiUrl
+    };
+
     if (firewall) {
-      updateFirewall(firewall.id, formData);
+      updateFirewall(firewall.id, firewallData);
       toast({
         title: "Sucesso",
         description: "Firewall atualizado com sucesso.",
       });
     } else {
-      addFirewall(formData);
+      addFirewall(firewallData);
       toast({
         title: "Sucesso",
         description: "Firewall adicionado com sucesso.",
@@ -64,7 +79,7 @@ const FirewallForm: React.FC<FirewallFormProps> = ({ firewall, trigger }) => {
     }
 
     setOpen(false);
-    setFormData({ name: '', apiUrl: '', type: 'UDM' });
+    setFormData({ name: '', apiUrl: '', apiKey: '', type: 'UDM' });
   };
 
   const defaultTrigger = (
@@ -98,15 +113,33 @@ const FirewallForm: React.FC<FirewallFormProps> = ({ firewall, trigger }) => {
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="apiUrl">URL da API</Label>
+            <Label htmlFor="apiUrl">URL Base da API</Label>
             <Input
               id="apiUrl"
               type="url"
               value={formData.apiUrl}
               onChange={(e) => setFormData(prev => ({ ...prev, apiUrl: e.target.value }))}
-              placeholder="https://192.168.1.1:8443"
+              placeholder="https://192.168.108.1"
               required
             />
+            <p className="text-xs text-muted-foreground">
+              URL base do dispositivo (ex: https://192.168.108.1)
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="apiKey">API Key</Label>
+            <Input
+              id="apiKey"
+              type="password"
+              value={formData.apiKey}
+              onChange={(e) => setFormData(prev => ({ ...prev, apiKey: e.target.value }))}
+              placeholder="YOUR_API_KEY"
+              required
+            />
+            <p className="text-xs text-muted-foreground">
+              Chave de API gerada no painel do UniFi
+            </p>
           </div>
           
           <div className="space-y-2">

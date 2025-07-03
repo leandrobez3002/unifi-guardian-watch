@@ -5,6 +5,7 @@ export interface Firewall {
   id: string;
   name: string;
   apiUrl: string;
+  apiKey: string;
   type: 'UDM' | 'UCG';
   status: 'online' | 'offline' | 'error';
   lastUpdated?: Date;
