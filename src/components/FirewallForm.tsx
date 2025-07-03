@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Settings } from "lucide-react";
+import { Plus, Settings, Wifi, WifiOff, Loader2 } from "lucide-react";
 import { useFirewall, Firewall } from "@/contexts/FirewallContext";
 import { useToast } from "@/hooks/use-toast";
 
@@ -17,6 +17,7 @@ interface FirewallFormProps {
 
 const FirewallForm: React.FC<FirewallFormProps> = ({ firewall, trigger }) => {
   const [open, setOpen] = useState(false);
+  const [testing, setTesting] = useState(false);
   const [formData, setFormData] = useState({
     name: firewall?.name || '',
     apiUrl: firewall?.apiUrl || '',
@@ -26,6 +27,55 @@ const FirewallForm: React.FC<FirewallFormProps> = ({ firewall, trigger }) => {
   
   const { addFirewall, updateFirewall } = useFirewall();
   const { toast } = useToast();
+
+  const testConnection = async () => {
+    if (!formData.apiUrl || !formData.apiKey) {
+      toast({
+        title: "Erro",
+        description: "URL da API e API Key são obrigatórios para o teste.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setTesting(true);
+    
+    try {
+      // Ajustar a URL para o formato correto da API UniFi
+      let apiUrl = formData.apiUrl;
+      if (!apiUrl.includes('/proxy/network/integration/v1')) {
+        apiUrl = apiUrl.replace(/\/$/, '');
+        apiUrl = `${apiUrl}/proxy/network/integration/v1`;
+      }
+
+      const response = await fetch(`${apiUrl}/sites`, {
+        method: 'GET',
+        headers: {
+          'X-API-KEY': formData.apiKey,
+          'Accept': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        toast({
+          title: "Conexão bem-sucedida!",
+          description: `Conectado com sucesso. ${data.length || 0} site(s) encontrado(s).`,
+        });
+      } else {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+    } catch (error) {
+      console.error('Erro ao testar conexão:', error);
+      toast({
+        title: "Falha na conexão",
+        description: error instanceof Error ? error.message : "Erro desconhecido ao conectar com a API.",
+        variant: "destructive",
+      });
+    } finally {
+      setTesting(false);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -158,6 +208,28 @@ const FirewallForm: React.FC<FirewallFormProps> = ({ firewall, trigger }) => {
                 <SelectItem value="UCG">UCG (UniFi Cloud Gateway)</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="flex justify-center pt-2">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={testConnection}
+              disabled={testing || !formData.apiUrl || !formData.apiKey}
+              className="w-full"
+            >
+              {testing ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Testando conexão...
+                </>
+              ) : (
+                <>
+                  <Wifi className="h-4 w-4 mr-2" />
+                  Testar Conexão
+                </>
+              )}
+            </Button>
           </div>
           
           <div className="flex justify-end space-x-2 pt-4">
